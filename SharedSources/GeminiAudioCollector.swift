@@ -59,7 +59,7 @@ public class GeminiAudioCollector {
                 let setupMessage = """
                 {
                     "setup": {
-                        "model": "models/gemini-2.5-flash-native-audio-preview-12-2025",
+                        "model": "models/\(GeminiModels.liveAudio)",
                         "generation_config": {
                             "response_modalities": ["AUDIO"],
                             "speech_config": {

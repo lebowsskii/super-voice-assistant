@@ -37,6 +37,9 @@ let package = Package(
             name: "TestAudioCollector",
             targets: ["TestAudioCollector"]),
         .executable(
+            name: "TestParakeet",
+            targets: ["TestParakeet"]),
+        .executable(
             name: "TestStreamingTTS",
             targets: ["TestStreamingTTS"]),
         .executable(
@@ -55,7 +58,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", exact: "1.8.0"),
         .package(url: "https://github.com/argmaxinc/WhisperKit", from: "0.13.0"),
-        .package(url: "https://github.com/FluidInference/FluidAudio.git", from: "0.7.9")
+        .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.15.5")
     ],
     targets: [
         .target(
@@ -102,6 +105,10 @@ let package = Package(
             name: "TestAudioCollector",
             dependencies: ["SharedModels"],
             path: "tests/test-audio-collector"),
+        .executableTarget(
+            name: "TestParakeet",
+            dependencies: ["SharedModels"],
+            path: "tests/test-parakeet"),
         .executableTarget(
             name: "TestStreamingTTS",
             dependencies: ["SharedModels"],

@@ -350,14 +350,16 @@ class AudioTranscriptionManager {
 
     @MainActor
     private func transcribeWithParakeet() async {
-        // Load model if not already loaded
-        if ModelStateManager.shared.loadedParakeetTranscriber == nil ||
+        // Load the model unless the selected version is already the loaded one.
+        // The version check also recovers if some other code path switched versions
+        // without triggering a reload.
+        if ModelStateManager.shared.loadedParakeetTranscriber?.loadedVersion != ModelStateManager.shared.parakeetVersion ||
            ModelStateManager.shared.parakeetLoadingState != .loaded {
             await ModelStateManager.shared.loadParakeetModel()
         }
 
         guard let transcriber = ModelStateManager.shared.loadedParakeetTranscriber,
-              transcriber.isReady else {
+              await transcriber.isReady else {
             print("Parakeet not initialized - please select Parakeet in Settings and wait for model to load")
             isTranscribing = false
             delegate?.transcriptionDidFail(error: "No Parakeet model loaded. Please wait for model to download in Settings.")

@@ -55,8 +55,10 @@ struct SettingsView: View {
                             onSelect: {
                                 modelState.selectedEngine = .parakeet
                                 modelState.parakeetVersion = version
-                                // Load the model if not already loaded
-                                if modelState.parakeetLoadingState != .loaded {
+                                // Load unless this exact version is already in memory.
+                                // Checking the loading state alone would keep a previously
+                                // loaded version active after switching to another one.
+                                if modelState.loadedParakeetTranscriber?.loadedVersion != version {
                                     Task {
                                         await modelState.loadParakeetModel()
                                     }
@@ -192,14 +194,7 @@ struct SettingsView: View {
         }
 
         // For other versions or when WhisperKit is active, check if downloaded on disk
-        let modelName = version == .v2 ? "parakeet-tdt-0.6b-v2-coreml" : "parakeet-tdt-0.6b-v3-coreml"
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let modelPath = documentsPath.appendingPathComponent("FluidAudio").appendingPathComponent(modelName)
-
-        if FileManager.default.fileExists(atPath: modelPath.path) {
-            return .downloaded
-        }
-        return .notDownloaded
+        return version.isDownloaded ? .downloaded : .notDownloaded
     }
 
     func checkForIncompleteDownloads() async {

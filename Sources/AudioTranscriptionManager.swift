@@ -357,7 +357,7 @@ class AudioTranscriptionManager {
         }
 
         guard let transcriber = ModelStateManager.shared.loadedParakeetTranscriber,
-              transcriber.isReady else {
+              await transcriber.isReady else {
             print("Parakeet not initialized - please select Parakeet in Settings and wait for model to load")
             isTranscribing = false
             delegate?.transcriptionDidFail(error: "No Parakeet model loaded. Please wait for model to download in Settings.")

@@ -79,6 +79,31 @@ public enum ParakeetVersion: String, CaseIterable {
             return .v3
         }
     }
+
+    /// FluidAudio's HuggingFace repository for this version
+    private var repo: Repo {
+        switch self {
+        case .v2:
+            return .parakeetV2
+        case .v3:
+            return .parakeetV3
+        }
+    }
+
+    /// Local directory FluidAudio caches this model in.
+    /// The folder name comes from FluidAudio itself rather than being hardcoded here,
+    /// so it keeps matching if upstream renames it (it dropped the "-coreml" suffix in 0.13).
+    public var modelDirectory: URL {
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return documentsPath
+            .appendingPathComponent("FluidAudio")
+            .appendingPathComponent(repo.folderName)
+    }
+
+    /// Whether this model has already been downloaded to disk
+    public var isDownloaded: Bool {
+        FileManager.default.fileExists(atPath: modelDirectory.path)
+    }
 }
 
 /// Loading state for Parakeet models
@@ -123,9 +148,6 @@ public class ParakeetTranscriber {
         print("Loading Parakeet model: \(version.displayName)")
 
         do {
-            // Create an AsrManager instance
-            let manager = AsrManager()
-
             loadingState = .loading
 
             // Load the models - FluidAudio will download them automatically if needed
@@ -144,10 +166,8 @@ public class ParakeetTranscriber {
                 version: version.asrModelVersion
             )
 
-            // Initialize the manager with loaded models
-            try await manager.initialize(models: asrModels)
-
-            asrManager = manager
+            // Create the manager with the loaded models
+            asrManager = AsrManager(models: asrModels)
             loadedVersion = version
             loadingState = .loaded
             print("Parakeet model loaded successfully: \(version.displayName)")
@@ -170,7 +190,9 @@ public class ParakeetTranscriber {
 
         do {
             print("Transcribing \(audioSamples.count) samples with Parakeet...")
-            let result = try await manager.transcribe(audioSamples)
+            // Each recording is independent, so start from a fresh decoder state
+            var decoderState = try TdtDecoderState()
+            let result = try await manager.transcribe(audioSamples, decoderState: &decoderState)
             let text = result.text
             print("Parakeet transcription complete: \(text)")
             return text
@@ -180,8 +202,12 @@ public class ParakeetTranscriber {
     }
 
     /// Check if a model is loaded and ready
+    /// AsrManager is an actor, so its availability has to be awaited
     public var isReady: Bool {
-        return asrManager?.isAvailable ?? false && loadingState == .loaded
+        get async {
+            guard let manager = asrManager else { return false }
+            return await manager.isAvailable && loadingState == .loaded
+        }
     }
 
     /// Unload the current model to free memory

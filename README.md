@@ -195,6 +195,10 @@ swift run DeleteModel <model-name>
 # Test transcription with a sample audio file
 swift run TestTranscription
 
+# Test Parakeet transcription on an audio file
+swift run TestParakeet [path-to-audio] [v2|v3]
+# Defaults to test_audio.wav with v2
+
 # Test live transcription with microphone input
 swift run TestLiveTranscription
 

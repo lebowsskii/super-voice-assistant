@@ -334,13 +334,7 @@ class ModelStateManager: ObservableObject {
         currentParakeetLoadingTask?.cancel()
 
         // Check if model is already cached - show "loading" vs "downloading"
-        let modelName = parakeetVersion == .v2 ? "parakeet-tdt-0.6b-v2-coreml" : "parakeet-tdt-0.6b-v3-coreml"
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let modelPath = documentsPath.appendingPathComponent("FluidAudio").appendingPathComponent(modelName)
-        let isAlreadyDownloaded = FileManager.default.fileExists(atPath: modelPath.path)
-
-        // Set appropriate state
-        parakeetLoadingState = isAlreadyDownloaded ? .loading : .downloading
+        parakeetLoadingState = parakeetVersion.isDownloaded ? .loading : .downloading
 
         // Create new loading task
         let task = Task { () -> Void in
@@ -397,11 +391,7 @@ class ModelStateManager: ObservableObject {
         loadedParakeetTranscriber = nil
 
         // Check if model files exist on disk before setting state
-        let modelName = parakeetVersion == .v2 ? "parakeet-tdt-0.6b-v2-coreml" : "parakeet-tdt-0.6b-v3-coreml"
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let modelPath = documentsPath.appendingPathComponent("FluidAudio").appendingPathComponent(modelName)
-
-        if FileManager.default.fileExists(atPath: modelPath.path) {
+        if parakeetVersion.isDownloaded {
             parakeetLoadingState = .downloaded
         } else {
             parakeetLoadingState = .notDownloaded

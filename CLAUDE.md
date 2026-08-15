@@ -7,11 +7,27 @@
 ## Background Process Management
 
 - When developing and testing changes, run the app in background using: `swift build && swift run SuperVoiceAssistant` with `run_in_background: true`
-- The user may have a local shell alias `s` that runs the app from this project: `s='(cd ~/Desktop/projects/super-voice-assistant && swift run SuperVoiceAssistant)'`
+- The user has a local shell alias `s` that runs the app from this project: `s='(cd ~/super-voice-assistant && swift run SuperVoiceAssistant)'`
 - Keep the app running in background while the user tests functionality
 - Only kill and restart the background instance when making code changes that require a fresh build
 - Allow the user to continue using the running instance between agent sessions
 - The user prefers to keep the app running for continuous testing
+
+### Accessibility permission when launching the app
+
+macOS grants Accessibility to the app that owns the process tree, not to the binary itself.
+Launching the app from an agent shell therefore inherits the permission of whatever terminal
+hosts the agent - which is usually not the one listed in System Settings.
+
+Without that permission, the failure is silent and misleading:
+- global hotkeys still work (KeyboardShortcuts registers them through Carbon, which needs no permission)
+- recording, transcription and history all work
+- only the synthetic Cmd+V never arrives, so nothing is pasted at the cursor
+- the app still prints "✅ Paste command sent" - it never checks `AXIsProcessTrusted()`
+
+To check before blaming the code, run a one-liner that prints `AXIsProcessTrusted()` from the
+same shell. If it is false, either grant the host terminal Accessibility access or have the user
+launch the app themselves with `s`.
 
 ## Git Commit Guidelines
 
@@ -51,7 +67,7 @@
 - ✅ Transcription history integration
 
 **Keyboard Shortcuts**:
-- **Cmd+Opt+Z**: WhisperKit audio recording (offline)
+- **Cmd+Opt+Z**: Offline audio recording with the engine selected in Settings (WhisperKit or Parakeet)
 - **Cmd+Opt+X**: Gemini audio recording (cloud)
 - **Cmd+Opt+S**: Text-to-speech with Gemini
 - **Cmd+Opt+C**: Screen recording with video transcription

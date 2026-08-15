@@ -55,8 +55,10 @@ struct SettingsView: View {
                             onSelect: {
                                 modelState.selectedEngine = .parakeet
                                 modelState.parakeetVersion = version
-                                // Load the model if not already loaded
-                                if modelState.parakeetLoadingState != .loaded {
+                                // Load unless this exact version is already in memory.
+                                // Checking the loading state alone would keep a previously
+                                // loaded version active after switching to another one.
+                                if modelState.loadedParakeetTranscriber?.loadedVersion != version {
                                     Task {
                                         await modelState.loadParakeetModel()
                                     }

@@ -350,8 +350,10 @@ class AudioTranscriptionManager {
 
     @MainActor
     private func transcribeWithParakeet() async {
-        // Load model if not already loaded
-        if ModelStateManager.shared.loadedParakeetTranscriber == nil ||
+        // Load the model unless the selected version is already the loaded one.
+        // The version check also recovers if some other code path switched versions
+        // without triggering a reload.
+        if ModelStateManager.shared.loadedParakeetTranscriber?.loadedVersion != ModelStateManager.shared.parakeetVersion ||
            ModelStateManager.shared.parakeetLoadingState != .loaded {
             await ModelStateManager.shared.loadParakeetModel()
         }

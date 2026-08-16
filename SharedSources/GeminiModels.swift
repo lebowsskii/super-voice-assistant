@@ -13,9 +13,18 @@ import Foundation
 public enum GeminiModels {
 
     /// Model for `generateContent` requests: audio and video transcription.
-    /// Override with GEMINI_MODEL in .env
-    public static var generateContent: String {
-        ProcessInfo.processInfo.environment["GEMINI_MODEL"] ?? "gemini-3.7-flash"
+    /// Fixed — fastest and most consistent of the models benchmarked
+    /// (see docs/superpowers/specs/2026-08-16-todo-followups-design.md).
+    /// No .env override: tools/transcribe-video keeps its own copy and its
+    /// own GEMINI_MODEL handling, out of scope here.
+    public static let generateContent = "gemini-3.1-flash-lite"
+
+    /// Models that reject `generationConfig.thinkingConfig` with 400 Invalid
+    /// argument. Checked before sending the field.
+    public static let modelsWithoutThinkingConfig: Set<String> = ["gemini-flash-lite-latest"]
+
+    public static func supportsThinkingConfig(_ model: String) -> Bool {
+        !modelsWithoutThinkingConfig.contains(model)
     }
 
     /// Model for the Live API (WebSocket) used by streaming text-to-speech.

@@ -86,7 +86,7 @@ public class VideoTranscriber {
         MemoryMonitor.shared.checkpoint("after video base64 encode")
 
         // Construct request body
-        let requestBody: [String: Any] = [
+        var requestBody: [String: Any] = [
             "contents": [
                 [
                     "parts": [
@@ -104,6 +104,10 @@ public class VideoTranscriber {
             ]
         ]
 
+        if GeminiModels.supportsThinkingConfig(GeminiModels.generateContent) {
+            requestBody["generationConfig"] = ["thinkingConfig": ["thinkingBudget": 0]]
+        }
+
         // Convert to JSON
         guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {
             completion(.failure(TranscriptionError.requestFailed(statusCode: 0, message: "Failed to create JSON request")))
@@ -117,7 +121,7 @@ public class VideoTranscriber {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = jsonData
 
-        let task = URLSession.shared.dataTask(with: request) { data, response, err in
+        GeminiRetryingRequest.send(request) { data, response, err in
             if let err = err {
                 completion(.failure(err))
                 return
@@ -154,8 +158,6 @@ public class VideoTranscriber {
                 completion(.failure(error))
             }
         }
-
-        task.resume()
     }
 
     // MARK: - Private Helpers

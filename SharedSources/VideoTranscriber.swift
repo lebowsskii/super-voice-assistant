@@ -121,7 +121,7 @@ public class VideoTranscriber {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = jsonData
 
-        let task = URLSession.shared.dataTask(with: request) { data, response, err in
+        GeminiRetryingRequest.send(request) { data, response, err in
             if let err = err {
                 completion(.failure(err))
                 return
@@ -158,8 +158,6 @@ public class VideoTranscriber {
                 completion(.failure(error))
             }
         }
-
-        task.resume()
     }
 
     // MARK: - Private Helpers

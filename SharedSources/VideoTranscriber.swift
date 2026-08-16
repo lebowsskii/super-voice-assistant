@@ -86,7 +86,7 @@ public class VideoTranscriber {
         MemoryMonitor.shared.checkpoint("after video base64 encode")
 
         // Construct request body
-        let requestBody: [String: Any] = [
+        var requestBody: [String: Any] = [
             "contents": [
                 [
                     "parts": [
@@ -103,6 +103,10 @@ public class VideoTranscriber {
                 ]
             ]
         ]
+
+        if GeminiModels.supportsThinkingConfig(GeminiModels.generateContent) {
+            requestBody["generationConfig"] = ["thinkingConfig": ["thinkingBudget": 0]]
+        }
 
         // Convert to JSON
         guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {

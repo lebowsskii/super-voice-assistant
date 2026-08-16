@@ -19,6 +19,14 @@ public enum GeminiModels {
     /// own GEMINI_MODEL handling, out of scope here.
     public static let generateContent = "gemini-3.1-flash-lite"
 
+    /// Models that reject `generationConfig.thinkingConfig` with 400 Invalid
+    /// argument. Checked before sending the field.
+    public static let modelsWithoutThinkingConfig: Set<String> = ["gemini-flash-lite-latest"]
+
+    public static func supportsThinkingConfig(_ model: String) -> Bool {
+        !modelsWithoutThinkingConfig.contains(model)
+    }
+
     /// Model for the Live API (WebSocket) used by streaming text-to-speech.
     /// Override with GEMINI_LIVE_MODEL in .env
     ///

@@ -87,7 +87,7 @@ public class GeminiAudioTranscriber {
         MemoryMonitor.shared.checkpoint("after Gemini audio WAV+base64 encode")
 
         // Construct request body
-        let requestBody: [String: Any] = [
+        var requestBody: [String: Any] = [
             "contents": [
                 [
                     "parts": [
@@ -104,6 +104,10 @@ public class GeminiAudioTranscriber {
                 ]
             ]
         ]
+
+        if GeminiModels.supportsThinkingConfig(GeminiModels.generateContent) {
+            requestBody["generationConfig"] = ["thinkingConfig": ["thinkingBudget": 0]]
+        }
 
         // Convert to JSON
         guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {

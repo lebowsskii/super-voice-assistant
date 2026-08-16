@@ -734,7 +734,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioTranscriptionManagerDel
         // Set our text to clipboard
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
-        
+
+        guard AXIsProcessTrusted() else {
+            print("❌ Paste failed: Accessibility permission not granted")
+            showTranscriptionError("Paste failed — grant Accessibility access, then paste manually (⌘V). Text is on the clipboard.")
+            showHistoryForPasteFailure()
+            // Do NOT restore the clipboard here: the transcribed text needs
+            // to stay in place so the user can paste it manually.
+            return
+        }
+
         // Try to paste
         let source = CGEventSource(stateID: .hidSystemState)
         

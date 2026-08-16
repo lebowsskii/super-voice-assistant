@@ -331,7 +331,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioTranscriptionManagerDel
                                 TranscriptionHistory.shared.addEntry(transcription)
 
                                 // Paste transcription at cursor
-                                self.pasteTextAtCursor(transcription)
+                                let pasteSucceeded = self.pasteTextAtCursor(transcription)
 
                                 // Delete the video file after successful transcription
                                 if let videoURL = self.currentVideoURL {
@@ -344,11 +344,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioTranscriptionManagerDel
                                 }
 
                                 // Show completion notification with transcription
-                                let completionNotification = NSUserNotification()
-                                completionNotification.title = "Video Transcribed"
-                                completionNotification.informativeText = transcription.prefix(100) + (transcription.count > 100 ? "..." : "")
-                                completionNotification.subtitle = "Pasted at cursor"
-                                NSUserNotificationCenter.default.deliver(completionNotification)
+                                if pasteSucceeded {
+                                    let completionNotification = NSUserNotification()
+                                    completionNotification.title = "Video Transcribed"
+                                    completionNotification.informativeText = transcription.prefix(100) + (transcription.count > 100 ? "..." : "")
+                                    completionNotification.subtitle = "Pasted at cursor"
+                                    NSUserNotificationCenter.default.deliver(completionNotification)
+                                }
 
                                 print("✅ Transcription complete:")
                                 print("─────────────────")
@@ -436,12 +438,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioTranscriptionManagerDel
         }
 
         // Paste the last transcription at cursor
-        pasteTextAtCursor(lastEntry.text)
+        let pasteSucceeded = pasteTextAtCursor(lastEntry.text)
 
-        let notification = NSUserNotification()
-        notification.title = "Pasted Last Transcription"
-        notification.informativeText = lastEntry.text.prefix(100) + (lastEntry.text.count > 100 ? "..." : "")
-        NSUserNotificationCenter.default.deliver(notification)
+        if pasteSucceeded {
+            let notification = NSUserNotification()
+            notification.title = "Pasted Last Transcription"
+            notification.informativeText = lastEntry.text.prefix(100) + (lastEntry.text.count > 100 ? "..." : "")
+            NSUserNotificationCenter.default.deliver(notification)
+        }
         print("📋 Pasted last transcription: \(lastEntry.text.prefix(50))...")
     }
 
@@ -717,7 +721,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioTranscriptionManagerDel
         NSUserNotificationCenter.default.deliver(notification)
     }
     
-    func pasteTextAtCursor(_ text: String) {
+    @discardableResult
+    func pasteTextAtCursor(_ text: String) -> Bool {
         // Save current clipboard contents first
         let pasteboard = NSPasteboard.general
         let savedTypes = pasteboard.types ?? []
@@ -738,10 +743,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioTranscriptionManagerDel
         guard AXIsProcessTrusted() else {
             print("❌ Paste failed: Accessibility permission not granted")
             showTranscriptionError("Paste failed — grant Accessibility access, then paste manually (⌘V). Text is on the clipboard.")
-            showHistoryForPasteFailure()
+            self.showTranscriptionHistory()
             // Do NOT restore the clipboard here: the transcribed text needs
             // to stay in place so the user can paste it manually.
-            return
+            return false
         }
 
         // Try to paste
@@ -790,8 +795,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioTranscriptionManagerDel
             }
             print("♻️ Restored clipboard")
         }
+
+        return true
     }
-    
+
     func showHistoryForPasteFailure() {
         // When paste fails in certain apps, show the history window
         // by simulating the Command+Option+A keyboard shortcut
@@ -823,8 +830,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioTranscriptionManagerDel
     
     func transcriptionDidComplete(text: String) {
         stopTranscriptionIndicator()
-        pasteTextAtCursor(text)
-        showTranscriptionNotification(text)
+        let pasteSucceeded = pasteTextAtCursor(text)
+        if pasteSucceeded {
+            showTranscriptionNotification(text)
+        }
     }
     
     func transcriptionDidFail(error: String) {
